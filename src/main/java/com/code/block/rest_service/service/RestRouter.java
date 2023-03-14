@@ -22,11 +22,19 @@ import static com.code.block.rest_service.service.UsersService.getUser;
 @Slf4j
 public class RestRouter extends AbstractVerticle {
 
+  private final MongoClient mongoClient;
+  private final JWTAuthHandlerImpl jwtHandler;
+
   private static final String MISSING_JSON_BODY_MSG = "Json body not included in request";
   private static final String LOGIN = "login";
   private static final String PASSWORD = "password";
 
-  public void register(RoutingContext routingContext, MongoClient mongoClient) {
+  public RestRouter(MongoClient mongoClient, JWTAuthHandlerImpl jwtHandler) {
+    this.mongoClient = mongoClient;
+    this.jwtHandler = jwtHandler;
+  }
+
+  public void register(RoutingContext routingContext) {
     JsonObject user = routingContext.body().asJsonObject();
     if (user == null) {
       String message = MISSING_JSON_BODY_MSG;
@@ -81,7 +89,7 @@ public class RestRouter extends AbstractVerticle {
     return promise.future();
   }
 
-  public void login(RoutingContext routingContext, MongoClient mongoClient, JWTAuth provider) {
+  public void login(RoutingContext routingContext, JWTAuth provider) {
     JsonObject user = routingContext.body().asJsonObject();
 
     if (user == null) {
@@ -119,7 +127,7 @@ public class RestRouter extends AbstractVerticle {
       });
   }
 
-  public void saveItem(RoutingContext routingContext, MongoClient mongoClient, JWTAuthHandlerImpl jwtHandler) {
+  public void saveItem(RoutingContext routingContext) {
     jwtHandler.authenticate(routingContext, res -> {
       if (res.succeeded()) {
         String userId = res.result().principal().getString("_id");
@@ -172,7 +180,7 @@ public class RestRouter extends AbstractVerticle {
     });
   }
 
-  public void getItems(RoutingContext routingContext, MongoClient mongoClient, JWTAuthHandlerImpl jwtHandler) {
+  public void getItems(RoutingContext routingContext) {
     jwtHandler.authenticate(routingContext, res -> {
       if (res.succeeded()) {
         String userId = res.result().principal().getString("_id");

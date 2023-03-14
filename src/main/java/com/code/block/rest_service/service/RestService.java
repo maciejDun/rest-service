@@ -30,14 +30,14 @@ public class RestService extends AbstractVerticle {
     JWTAuth jwtProvider = JWTAuth.create(vertx, config);
     JWTAuthHandlerImpl jwtHandler = new JWTAuthHandlerImpl(jwtProvider, null);
 
-    RestRouter restRouter = new RestRouter();
+    RestRouter restRouter = new RestRouter(mongoClient, jwtHandler);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    router.post("/items").handler(requestContext -> restRouter.saveItem(requestContext, mongoClient, jwtHandler));
-    router.get("/items").handler(requestContext -> restRouter.getItems(requestContext, mongoClient, jwtHandler));
-    router.post("/register").handler(requestContext -> restRouter.register(requestContext, mongoClient));
-    router.post("/login").handler(requestContext -> restRouter.login(requestContext, mongoClient, jwtProvider));
+    router.post("/items").handler(restRouter::saveItem);
+    router.get("/items").handler(restRouter::getItems);
+    router.post("/register").handler(restRouter::register);
+    router.post("/login").handler(requestContext -> restRouter.login(requestContext, jwtProvider));
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -47,7 +47,10 @@ public class RestService extends AbstractVerticle {
           startPromise.complete();
         }
       )
-      .onFailure(startPromise::fail);
+      .onFailure(cause -> {
+        log.error("Server failed to start, cause: {}", cause.getMessage());
+        startPromise.fail(cause);
+      });
   }
 
   private MongoClient getMongoClient() {
