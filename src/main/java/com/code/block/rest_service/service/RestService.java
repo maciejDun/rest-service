@@ -30,12 +30,12 @@ public class RestService extends AbstractVerticle {
     JWTAuth jwtProvider = JWTAuth.create(vertx, config);
     JWTAuthHandlerImpl jwtHandler = new JWTAuthHandlerImpl(jwtProvider, null);
 
-    RestRouter restRouter = new RestRouter(mongoClient, jwtHandler);
+    RestRouter restRouter = new RestRouter(jwtHandler, new MongoDao(mongoClient));
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
     router.post("/items").handler(restRouter::saveItem);
-    router.get("/items").handler(restRouter::getItems);
+    router.get("/items").handler(restRouter::getTitles);
     router.post("/register").handler(restRouter::register);
     router.post("/login").handler(requestContext -> restRouter.login(requestContext, jwtProvider));
 
