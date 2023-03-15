@@ -1,11 +1,11 @@
 package com.code.block.rest_service.service;
 
+import com.code.block.rest_service.repository.MongoDao;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.impl.JWTAuthHandlerImpl;
@@ -15,23 +15,20 @@ import lombok.extern.slf4j.Slf4j;
 public class RestService extends AbstractVerticle {
   public static final int HTTP_SERVER_PORT = 8888;
 
-  private final MongoClient mongoClient;
+  private final MongoDao mongoDao;
+  private final JWTAuthOptions config;
 
-  public RestService(MongoClient mongoClient) {
-    this.mongoClient = mongoClient;
+  public RestService(MongoDao mongoDao, JWTAuthOptions config) {
+    this.mongoDao = mongoDao;
+    this.config = config;
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    JWTAuthOptions config = new JWTAuthOptions()
-      .setKeyStore(new KeyStoreOptions()
-        .setPath("keystore.jceks")
-        .setPassword("password"));
-
     JWTAuth jwtProvider = JWTAuth.create(vertx, config);
     JWTAuthHandlerImpl jwtHandler = new JWTAuthHandlerImpl(jwtProvider, null);
 
-    RestRouter restRouter = new RestRouter(jwtHandler, new MongoDao(mongoClient));
+    RestRouter restRouter = new RestRouter(jwtHandler, mongoDao);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());

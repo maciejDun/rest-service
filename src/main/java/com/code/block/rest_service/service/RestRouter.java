@@ -1,17 +1,14 @@
 package com.code.block.rest_service.service;
 
-import com.code.block.rest_service.model.User;
+import com.code.block.rest_service.repository.MongoDao;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.impl.JWTAuthHandlerImpl;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Optional;
 
 import static com.code.block.rest_service.utils.ResponseUtils.response;
 
@@ -47,10 +44,8 @@ public class RestRouter extends AbstractVerticle {
             return;
         }
 
-        Promise<Boolean> isLoginPresentPromise = Promise.promise();
-        mongoDao.isLoginPresent(loginValue, isLoginPresentPromise);
-
-        isLoginPresentPromise.future().compose(isPresent -> {
+        mongoDao.isLoginPresent(loginValue)
+                .compose(isPresent -> {
             if (Boolean.TRUE.equals(isPresent)) {
                 return Future.failedFuture(new RuntimeException("User login already present"));
             } else {
@@ -89,10 +84,8 @@ public class RestRouter extends AbstractVerticle {
             return;
         }
 
-        Promise<Optional<User>> isUserPresentPromise = Promise.promise();
-        mongoDao.getUser(loginValue, passwordValue, isUserPresentPromise);
-
-        isUserPresentPromise.future().compose(optionalUser ->
+        mongoDao.getUser(loginValue, passwordValue)
+        .compose(optionalUser ->
                         optionalUser.map(Future::succeededFuture).orElseGet(() -> Future.failedFuture(new RuntimeException("User login or password incorrect"))))
                 .onSuccess(res -> {
 

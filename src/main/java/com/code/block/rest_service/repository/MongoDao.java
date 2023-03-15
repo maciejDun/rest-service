@@ -1,4 +1,4 @@
-package com.code.block.rest_service.service;
+package com.code.block.rest_service.repository;
 
 import com.code.block.rest_service.model.User;
 import io.vertx.core.Future;
@@ -20,7 +20,8 @@ public class MongoDao {
     this.mongoClient = mongoClient;
   }
 
-  public void isLoginPresent(String login, Promise<Boolean> promise) {
+  public Future<Boolean> isLoginPresent(String login) {
+    Promise<Boolean> promise = Promise.promise();
     JsonObject query = new JsonObject().put("login", login);
     mongoClient.findOne("users", query, new JsonObject(), res -> {
       if (res.succeeded()) {
@@ -29,9 +30,11 @@ public class MongoDao {
         promise.fail(res.cause());
       }
     });
+    return promise.future();
   }
 
-  public void getUser(String login, String password, Promise<Optional<User>> promise) {
+  public Future<Optional<User>> getUser(String login, String password) {
+    Promise<Optional<User>> promise = Promise.promise();
     JsonObject query = new JsonObject().put("login", login).put("password", password);
     mongoClient.findOne("users", query, new JsonObject(), res -> {
       if (res.succeeded()) {
@@ -50,6 +53,7 @@ public class MongoDao {
         promise.fail(res.cause());
       }
     });
+    return promise.future();
   }
 
   public Future<Void> saveUser(JsonObject user) {
