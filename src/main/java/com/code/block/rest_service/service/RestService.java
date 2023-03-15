@@ -2,7 +2,6 @@ package com.code.block.rest_service.service;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -16,12 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 public class RestService extends AbstractVerticle {
   public static final int HTTP_SERVER_PORT = 8888;
 
-  @Override
-  public void start(Promise<Void> startPromise) {
-    configureHttpServer(startPromise, getMongoClient());
+  private final MongoClient mongoClient;
+
+  public RestService(MongoClient mongoClient) {
+    this.mongoClient = mongoClient;
   }
 
-  private void configureHttpServer(Promise<Void> startPromise, MongoClient mongoClient) {
+  @Override
+  public void start(Promise<Void> startPromise) {
     JWTAuthOptions config = new JWTAuthOptions()
       .setKeyStore(new KeyStoreOptions()
         .setPath("keystore.jceks")
@@ -53,11 +54,4 @@ public class RestService extends AbstractVerticle {
       });
   }
 
-  private MongoClient getMongoClient() {
-    JsonObject mongoConfig = new JsonObject()
-      .put("connection_string", "mongodb://localhost:27017")
-      .put("db_name", "test");
-
-    return MongoClient.create(vertx, mongoConfig);
-  }
 }
