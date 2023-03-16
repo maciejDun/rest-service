@@ -2,13 +2,16 @@ package com.code.block.rest_service;
 
 import com.code.block.rest_service.model.User;
 import com.code.block.rest_service.repository.MongoDao;
+import com.code.block.rest_service.service.RestRouter;
 import com.code.block.rest_service.service.RestService;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.web.handler.impl.JWTAuthHandlerImpl;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +38,8 @@ class TestRestService {
 
     @BeforeEach
     void setup(Vertx vertx, VertxTestContext testContext) {
-        RestService restService = new RestService(mongoDao, getJWTConfig());
+        RestRouter restRouter = new RestRouter(getJwtHandler(), getJwtProvider(), mongoDao);
+        RestService restService = new RestService(restRouter);
         vertx.deployVerticle(restService, testContext.succeeding(id -> testContext.completeNow()));
     }
 
@@ -158,5 +162,13 @@ class TestRestService {
                 .setKeyStore(new KeyStoreOptions()
                         .setPath("./src/test/resources/keystore.jceks")
                         .setPassword("password"));
+    }
+
+    private JWTAuth getJwtProvider() {
+        return JWTAuth.create(Vertx.vertx(), getJWTConfig());
+    }
+
+    private JWTAuthHandlerImpl getJwtHandler() {
+        return new JWTAuthHandlerImpl(getJwtProvider(), null);
     }
 }
