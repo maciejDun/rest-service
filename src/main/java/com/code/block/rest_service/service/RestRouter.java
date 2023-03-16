@@ -16,14 +16,16 @@ import static com.code.block.rest_service.utils.ResponseUtils.response;
 public class RestRouter extends AbstractVerticle {
 
     private final JWTAuthHandlerImpl jwtHandler;
+    private final JWTAuth provider;
     private final MongoDao mongoDao;
 
     private static final String MISSING_JSON_BODY_MSG = "Json body not included in request";
     private static final String LOGIN = "login";
     private static final String PASSWORD = "password";
 
-    public RestRouter(JWTAuthHandlerImpl jwtHandler, MongoDao mongoDao) {
+    public RestRouter(JWTAuthHandlerImpl jwtHandler, JWTAuth provider, MongoDao mongoDao) {
         this.jwtHandler = jwtHandler;
+        this.provider = provider;
         this.mongoDao = mongoDao;
     }
 
@@ -66,7 +68,7 @@ public class RestRouter extends AbstractVerticle {
         });
     }
 
-    public void login(RoutingContext routingContext, JWTAuth provider) {
+    public void login(RoutingContext routingContext) {
         JsonObject user = routingContext.body().asJsonObject();
 
         if (user == null) {

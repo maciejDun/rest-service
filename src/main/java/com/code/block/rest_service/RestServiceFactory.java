@@ -1,16 +1,19 @@
 package com.code.block.rest_service;
 
 import com.code.block.rest_service.repository.MongoDao;
+import com.code.block.rest_service.service.RestRouter;
 import com.code.block.rest_service.service.RestService;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.KeyStoreOptions;
+import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.web.handler.impl.JWTAuthHandlerImpl;
 
 public class RestServiceFactory {
     public RestService buildRestService() {
-        return new RestService(new MongoDao(getMongoClient()), getJWTConfig());
+        return new RestService(new RestRouter(getJwtHandler(), getJwtProvider(), new MongoDao(getMongoClient())));
     }
 
     private MongoClient getMongoClient() {
@@ -27,4 +30,13 @@ public class RestServiceFactory {
                         .setPath("keystore.jceks")
                         .setPassword("password"));
     }
+
+    private JWTAuth getJwtProvider() {
+        return  JWTAuth.create(Vertx.vertx(), getJWTConfig());
+    }
+
+    private JWTAuthHandlerImpl getJwtHandler() {
+        return new JWTAuthHandlerImpl(getJwtProvider(), null);
+    }
+
 }
