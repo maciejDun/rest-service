@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -152,7 +153,26 @@ class TestRestService {
                     assertEquals(200, response.statusCode());
                     assertEquals("Token obtained successfully", response.statusMessage());
                     assertNotNull(response.body());
-                    return Future.succeededFuture(response.statusMessage());
+                    return response.body();
+                }))
+                .onComplete(testContext.succeeding(body -> {
+                    assertNotNull(body.toJson());
+                    testContext.completeNow();
+                }));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "GET"})
+    void shouldNotSaveOrGetItemsWhenUnauthenticated(String httpMethod, Vertx vertx, VertxTestContext testContext) {
+        //given
+        HttpClient client = vertx.createHttpClient();
+
+        //then
+        client.request(HttpMethod.valueOf(httpMethod), 8888, "localhost", "/items")
+                .compose(req -> req.send("{\"title\": \"title22\"}").compose(response -> {
+                    assertEquals(403, response.statusCode());
+                    assertEquals("Unauthenticated to preform action", response.statusMessage());
+                    return Future.succeededFuture(response.body());
                 }))
                 .onComplete(testContext.succeeding(buffer -> testContext.verify(testContext::completeNow)));
     }
